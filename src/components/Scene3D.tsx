@@ -1,135 +1,183 @@
 "use client";
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, Stars } from "@react-three/drei";
+import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 
-function Particles() {
-  const pointsRef = useRef<THREE.Points>(null);
-  const count = 1800;
+const vertexShader = `
+  uniform float uTime;
+  varying vec3 vNormal;
+  varying vec3 vLocalPos;
+  varying float vDisp;
+
+  void main() {
+    vNormal = normal;
+    float t = uTime;
+
+    float s = sin(position.x * 2.8 + t * 0.6)
+            + sin(position.y * 3.2 + t * 0.8)
+            + sin(position.z * 2.5 + t * 0.5);
+    float c = cos(position.x * 1.8 + t * 0.4)
+            + cos(position.y * 2.2 + t * 0.55);
+    float d = (s * 0.5 + c * 0.35) * 0.075;
+    vDisp = d;
+
+    vec3 np = position + normal * d;
+    vLocalPos = np;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(np, 1.0);
+  }
+`;
+
+const fragmentShader = `
+  uniform float uTime;
+  uniform vec3 uCamPos;
+  varying vec3 vNormal;
+  varying vec3 vLocalPos;
+  varying float vDisp;
+
+  void main() {
+    vec3 viewDir = normalize(uCamPos - vLocalPos);
+    float fresnel = 1.0 - max(dot(normalize(vNormal), viewDir), 0.0);
+    fresnel = pow(fresnel, 1.6);
+
+    float t = sin(uTime * 0.35) * 0.5 + 0.5;
+
+    vec3 core   = vec3(0.04, 0.02, 0.12);
+    vec3 gold   = vec3(0.79, 0.66, 0.30);
+    vec3 bright = vec3(0.91, 0.79, 0.48);
+    vec3 purple = vec3(0.48, 0.36, 0.94);
+
+    vec3 color = mix(core, gold, fresnel);
+    color = mix(color, bright, fresnel * fresnel * 0.7);
+    color += purple * (1.0 - fresnel) * 0.25 * t;
+    color += vec3(vDisp * 5.0, vDisp * 2.5, 0.0) * 0.12;
+
+    float alpha = 0.85 + fresnel * 0.15;
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+function MorphingSphere() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const wireRef = useRef<THREE.Mesh>(null);
+
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uCamPos: { value: new THREE.Vector3(0, 0, 9) },
+        },
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        side: THREE.FrontSide,
+      }),
+    []
+  );
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    material.uniforms.uTime.value = t;
+    material.uniforms.uCamPos.value.copy(state.camera.position);
+
+    if (meshRef.current) {
+      meshRef.current.rotation.y = t * 0.09;
+      meshRef.current.rotation.x = Math.sin(t * 0.15) * 0.12;
+    }
+    if (wireRef.current) {
+      wireRef.current.rotation.y = t * 0.05;
+      wireRef.current.rotation.x = t * 0.03;
+    }
+  });
+
+  return (
+    <group>
+      {/* Morphing shader sphere */}
+      <mesh ref={meshRef} geometry={new THREE.IcosahedronGeometry(2.4, 5)} material={material} />
+
+      {/* Wireframe overlay */}
+      <mesh ref={wireRef}>
+        <icosahedronGeometry args={[2.72, 3]} />
+        <meshBasicMaterial color="#C9A84C" wireframe transparent opacity={0.07} />
+      </mesh>
+
+      {/* Inner glow */}
+      <mesh>
+        <sphereGeometry args={[3.3, 32, 32]} />
+        <meshBasicMaterial color="#C9A84C" transparent opacity={0.045} side={THREE.BackSide} />
+      </mesh>
+    </group>
+  );
+}
+
+function ParticleRing() {
+  const ringRef = useRef<THREE.Points>(null);
 
   const { positions, colors } = useMemo(() => {
+    const count = 700;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
-    const goldColor = new THREE.Color("#C9A84C");
-    const purpleColor = new THREE.Color("#7B61FF");
-    const whiteColor = new THREE.Color("#E8E8E8");
+    const gold = new THREE.Color("#C9A84C");
+    const purple = new THREE.Color("#7B5CF0");
 
     for (let i = 0; i < count; i++) {
-      const r = 12 + Math.random() * 18;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
-
-      const mix = Math.random();
-      const color = mix < 0.5 ? goldColor : mix < 0.75 ? purpleColor : whiteColor;
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      const angle = (i / count) * Math.PI * 2;
+      const radius = 4.2 + (Math.random() - 0.5) * 1.2;
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 1.0;
+      positions[i * 3 + 2] = Math.sin(angle) * radius;
+      const c = i % 3 === 0 ? purple : gold;
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
     }
     return { positions, colors };
   }, []);
 
   useFrame((state) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.04;
-      pointsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.02) * 0.15;
+    if (ringRef.current) {
+      ringRef.current.rotation.y = state.clock.elapsedTime * 0.07;
     }
   });
 
   return (
-    <points ref={pointsRef}>
+    <points ref={ringRef}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.06} vertexColors sizeAttenuation transparent opacity={0.85} />
+      <pointsMaterial size={0.055} vertexColors sizeAttenuation transparent opacity={0.85} />
     </points>
   );
 }
 
-function CentralOrb() {
-  const outerRef = useRef<THREE.Mesh>(null);
-  const innerRef = useRef<THREE.Mesh>(null);
-  const ringsRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (outerRef.current) {
-      outerRef.current.rotation.x = t * 0.18;
-      outerRef.current.rotation.y = t * 0.28;
+function BackgroundParticles() {
+  const positions = useMemo(() => {
+    const count = 2200;
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const r = 16 + Math.random() * 28;
+      const th = Math.random() * Math.PI * 2;
+      const ph = Math.acos(2 * Math.random() - 1);
+      arr[i * 3] = r * Math.sin(ph) * Math.cos(th);
+      arr[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+      arr[i * 3 + 2] = r * Math.cos(ph);
     }
-    if (innerRef.current) {
-      innerRef.current.rotation.x = -t * 0.25;
-      innerRef.current.rotation.z = t * 0.15;
-    }
-    if (ringsRef.current) {
-      ringsRef.current.rotation.z = t * 0.1;
-      ringsRef.current.rotation.x = Math.sin(t * 0.3) * 0.3;
-    }
-  });
+    return arr;
+  }, []);
 
   return (
-    <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.8}>
-      <group>
-        {/* Outer icosahedron wireframe */}
-        <mesh ref={outerRef}>
-          <icosahedronGeometry args={[2.6, 1]} />
-          <meshStandardMaterial
-            color="#C9A84C"
-            wireframe
-            transparent
-            opacity={0.18}
-          />
-        </mesh>
-
-        {/* Inner solid icosahedron */}
-        <mesh ref={innerRef}>
-          <icosahedronGeometry args={[1.6, 1]} />
-          <meshStandardMaterial
-            color="#1a1020"
-            metalness={0.9}
-            roughness={0.1}
-            envMapIntensity={1}
-          />
-        </mesh>
-
-        {/* Gold inner glow sphere */}
-        <mesh>
-          <sphereGeometry args={[1.0, 32, 32]} />
-          <meshStandardMaterial
-            color="#C9A84C"
-            emissive="#8B5E1A"
-            emissiveIntensity={0.8}
-            transparent
-            opacity={0.15}
-          />
-        </mesh>
-
-        {/* Orbiting rings */}
-        <group ref={ringsRef}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[3.8, 0.015, 8, 120]} />
-            <meshStandardMaterial color="#C9A84C" transparent opacity={0.35} />
-          </mesh>
-          <mesh rotation={[Math.PI / 3, Math.PI / 4, 0]}>
-            <torusGeometry args={[4.6, 0.01, 8, 120]} />
-            <meshStandardMaterial color="#7B61FF" transparent opacity={0.25} />
-          </mesh>
-          <mesh rotation={[-Math.PI / 5, Math.PI / 3, 0]}>
-            <torusGeometry args={[5.2, 0.008, 8, 120]} />
-            <meshStandardMaterial color="#C9A84C" transparent opacity={0.15} />
-          </mesh>
-        </group>
-      </group>
-    </Float>
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.04} color="#666688" transparent opacity={0.55} />
+    </points>
   );
 }
 
 function CameraRig() {
-  const { camera } = useThree();
   const mouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -141,9 +189,9 @@ function CameraRig() {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  useFrame(() => {
-    camera.position.x += (mouse.current.x * 2 - camera.position.x) * 0.02;
-    camera.position.y += (mouse.current.y * 1.5 - camera.position.y) * 0.02;
+  useFrame(({ camera }) => {
+    camera.position.x += (mouse.current.x * 2.0 - camera.position.x) * 0.022;
+    camera.position.y += (mouse.current.y * 1.4 - camera.position.y) * 0.022;
     camera.lookAt(0, 0, 0);
   });
 
@@ -153,18 +201,19 @@ function CameraRig() {
 export default function Scene3D() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 12], fov: 55 }}
+      camera={{ position: [0, 0, 9], fov: 52 }}
       style={{ background: "transparent" }}
       gl={{ antialias: true, alpha: true }}
     >
-      <ambientLight intensity={0.3} />
-      <pointLight position={[8, 8, 8]} intensity={2} color="#C9A84C" />
-      <pointLight position={[-8, -8, 4]} intensity={1} color="#7B61FF" />
-      <pointLight position={[0, 0, 10]} intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.25} color="#1a0830" />
+      <pointLight position={[5, 5, 7]} intensity={90} color="#C9A84C" />
+      <pointLight position={[-7, -4, 2]} intensity={60} color="#7B5CF0" />
+      <pointLight position={[0, 0, 9]} intensity={18} color="#ffffff" />
 
-      <Stars radius={80} depth={50} count={3000} factor={3} saturation={0} fade speed={0.5} />
-      <Particles />
-      <CentralOrb />
+      <Stars radius={90} depth={60} count={2500} factor={2.5} saturation={0} fade speed={0.4} />
+      <BackgroundParticles />
+      <ParticleRing />
+      <MorphingSphere />
       <CameraRig />
     </Canvas>
   );

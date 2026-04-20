@@ -10,35 +10,33 @@ export default function CustomCursor() {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
-    let mouseX = 0, mouseY = 0;
-    let ringX = 0, ringY = 0;
+    let mx = 0, my = 0, rx = 0, ry = 0;
     let raf: number;
 
     const onMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      dot.style.left = `${mouseX}px`;
-      dot.style.top = `${mouseY}px`;
+      mx = e.clientX; my = e.clientY;
+      dot.style.left = `${mx}px`;
+      dot.style.top = `${my}px`;
     };
 
-    const animate = () => {
-      ringX += (mouseX - ringX) * 0.12;
-      ringY += (mouseY - ringY) * 0.12;
-      ring.style.left = `${ringX}px`;
-      ring.style.top = `${ringY}px`;
-      raf = requestAnimationFrame(animate);
+    const loop = () => {
+      rx += (mx - rx) * 0.11;
+      ry += (my - ry) * 0.11;
+      ring.style.left = `${rx}px`;
+      ring.style.top = `${ry}px`;
+      raf = requestAnimationFrame(loop);
     };
-
-    const onEnterHoverable = () => ring.classList.add("hovered");
-    const onLeaveHoverable = () => ring.classList.remove("hovered");
 
     document.addEventListener("mousemove", onMove);
-    raf = requestAnimationFrame(animate);
+    raf = requestAnimationFrame(loop);
 
-    const hoverables = document.querySelectorAll("a, button, [data-hover]");
-    hoverables.forEach((el) => {
-      el.addEventListener("mouseenter", onEnterHoverable);
-      el.addEventListener("mouseleave", onLeaveHoverable);
+    const addHover = () => ring.classList.add("hovered");
+    const removeHover = () => ring.classList.remove("hovered");
+
+    const els = document.querySelectorAll("a, button, [data-hover]");
+    els.forEach((el) => {
+      el.addEventListener("mouseenter", addHover);
+      el.addEventListener("mouseleave", removeHover);
     });
 
     return () => {
