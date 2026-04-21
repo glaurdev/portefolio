@@ -2,158 +2,117 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
-const groups = [
+const ease = [0.25, 0.46, 0.45, 0.94] as const;
+
+const specs = [
   {
-    icon: "◈",
-    color: "#C9A84C",
-    name: "Frontend",
+    category: "Réseaux",
+    color: "#0071E3",
     items: [
-      { name: "React / Next.js", level: 96 },
-      { name: "TypeScript", level: 92 },
-      { name: "Three.js / WebGL", level: 85 },
-      { name: "GSAP / Framer Motion", level: 90 },
-      { name: "Tailwind CSS", level: 95 },
+      { name: "Protocoles",     value: "TCP/IP, UDP, ICMP, ARP, NDP" },
+      { name: "Routage",        value: "OSPF, BGP, RIP, routage statique" },
+      { name: "Switching",      value: "VLANs (802.1Q), STP, LACP, port-channel" },
+      { name: "Sans-fil",       value: "Wi-Fi 802.11 a/b/g/n/ac" },
+      { name: "VPN",            value: "OpenVPN, WireGuard, IPSec, SSL/TLS" },
+      { name: "Firewall",       value: "pfSense, iptables, filtrage stateful, NAT" },
     ],
   },
   {
-    icon: "◉",
-    color: "#A78BFA",
-    name: "Backend",
+    category: "Systèmes",
+    color: "#2997FF",
     items: [
-      { name: "Node.js / Express", level: 88 },
-      { name: "Python / FastAPI", level: 80 },
-      { name: "PostgreSQL", level: 82 },
-      { name: "GraphQL", level: 78 },
-      { name: "Docker / DevOps", level: 75 },
+      { name: "Linux",          value: "Debian, Ubuntu Server, CentOS, Alpine" },
+      { name: "Windows Server", value: "Active Directory, GPO, DNS, DHCP, WSUS" },
+      { name: "Virtualisation", value: "Proxmox VE, VMware ESXi, KVM, LXC" },
+      { name: "Conteneurs",     value: "Docker, Docker Compose, Portainer" },
+      { name: "Stockage",       value: "NFS, iSCSI, ZFS, RAID, sauvegardes 3-2-1" },
+      { name: "PKI",            value: "Gestion certificats TLS, CA interne" },
     ],
   },
   {
-    icon: "◆",
-    color: "#E8C97A",
-    name: "Design & 3D",
+    category: "Supervision",
+    color: "#30D158",
     items: [
-      { name: "Figma / Design Systems", level: 88 },
-      { name: "GLSL Shaders", level: 72 },
-      { name: "Blender 3D", level: 70 },
-      { name: "Motion Design", level: 84 },
-      { name: "UI/UX Architecture", level: 87 },
+      { name: "Monitoring",     value: "Prometheus, Grafana, Zabbix, PRTG" },
+      { name: "Logs",           value: "ELK Stack, Loki, syslog centralisé" },
+      { name: "Alerting",       value: "Alertmanager, PagerDuty, Slack webhooks" },
+      { name: "Collecte",       value: "SNMP, Node Exporter, Telegraf, Beats" },
+      { name: "Inventaire",     value: "Découverte automatique, CMDB" },
+      { name: "Rapports",       value: "Tableaux de bord, SLA, capacity planning" },
+    ],
+  },
+  {
+    category: "Développement",
+    color: "#FF9F0A",
+    items: [
+      { name: "Langages",       value: "Python, Bash, C, JavaScript" },
+      { name: "Automatisation", value: "Ansible, scripts Netmiko, API REST" },
+      { name: "Outils réseau",  value: "Scapy, Wireshark, Nmap, tcpdump" },
+      { name: "Versioning",     value: "Git, GitHub, GitLab CI/CD" },
+      { name: "IaC",            value: "Terraform (bases), cloud-init" },
+      { name: "Scripting",      value: "Automatisation tâches infra, cron, systemd" },
     ],
   },
 ];
 
-function Bar({ name, level, color, i, inView }: { name: string; level: number; color: string; i: number; inView: boolean }) {
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <span className="font-syne text-xs text-[var(--text-2)] tracking-wide">{name}</span>
-        <span className="font-syne text-[10px] font-bold" style={{ color }}>{level}%</span>
-      </div>
-      <div className="h-px bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={inView ? { width: `${level}%` } : { width: 0 }}
-          transition={{ duration: 1.3, delay: 0.15 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
-          className="h-full rounded-full"
-          style={{ background: `linear-gradient(90deg, ${color}55, ${color})` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function Skills() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="skills" className="py-32 px-8 relative z-10">
-      <div className="max-w-7xl mx-auto">
-        <div ref={ref} className="text-center mb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7 }}
-            className="flex items-center justify-center gap-3 mb-5"
-          >
-            <div className="w-8 h-px bg-[var(--gold)]" />
-            <span className="font-syne text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--gold)]">
-              Expertise
-            </span>
-            <div className="w-8 h-px bg-[var(--gold)]" />
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.08 }}
-            className="font-syne font-extrabold text-white"
-            style={{ fontSize: "clamp(2.4rem,5vw,4rem)" }}
-          >
-            Stack &{" "}
-            <span
-              style={{
-                background: "linear-gradient(135deg,#C9A84C,#E8C97A)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Compétences
-            </span>
-          </motion.h2>
-        </div>
+    <section id="skills" className="bg-black py-28 px-8">
+      <div className="max-w-6xl mx-auto">
 
-        <div className="grid md:grid-cols-3 gap-5">
-          {groups.map((g, gi) => (
+        {/* Header */}
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 24 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, ease }}
+          className="text-center mb-20"
+        >
+          <p className="a-caption mb-5">Caractéristiques techniques</p>
+          <h2 className="a-title-1 text-white">
+            Tech{" "}
+            <span className="a-text-blue">Specs.</span>
+          </h2>
+          <p className="a-title-3 mt-5 max-w-xl mx-auto">
+            Ce que Grégoire maîtrise, du protocole réseau au script d'automatisation.
+          </p>
+        </motion.div>
+
+        {/* Spec sheets — Apple tech specs style */}
+        <div className="flex flex-col gap-6">
+          {specs.map((group, gi) => (
             <motion.div
-              key={g.name}
-              initial={{ opacity: 0, y: 50 }}
+              key={group.category}
+              initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.85, delay: 0.15 + gi * 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="relative p-8 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(255,255,255,0.09)] transition-all duration-500 group overflow-hidden"
+              transition={{ duration: 0.75, delay: gi * 0.1, ease }}
             >
-              {/* Corner glow */}
-              <div
-                className="absolute top-0 right-0 w-24 h-24 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{ background: `radial-gradient(circle at top right, ${g.color}15, transparent 70%)` }}
-              />
-
-              <div className="flex items-center gap-3 mb-8">
-                <span
-                  className="text-xl"
-                  style={{ color: g.color, filter: `drop-shadow(0 0 8px ${g.color}60)` }}
-                >
-                  {g.icon}
-                </span>
-                <span className="font-syne font-bold text-white text-base">{g.name}</span>
+              {/* Category header */}
+              <div className="flex items-center gap-3 mb-3 px-1">
+                <div className="w-2 h-2 rounded-full" style={{ background: group.color, boxShadow: `0 0 8px ${group.color}` }} />
+                <span className="text-sm font-semibold text-white tracking-tight">{group.category}</span>
               </div>
 
-              <div className="flex flex-col gap-5">
-                {g.items.map((item, ii) => (
-                  <Bar key={item.name} name={item.name} level={item.level} color={g.color} i={ii} inView={inView} />
+              {/* Spec rows — Apple style table */}
+              <div className="rounded-2xl overflow-hidden border border-[rgba(255,255,255,0.07)]">
+                {group.items.map((item, ii) => (
+                  <div
+                    key={item.name}
+                    className={`grid grid-cols-[180px_1fr] md:grid-cols-[220px_1fr] gap-4 px-6 py-4 ${
+                      ii < group.items.length - 1 ? "border-b border-[rgba(255,255,255,0.05)]" : ""
+                    } bg-[var(--surface)] hover:bg-[#242426] transition-colors duration-200`}
+                  >
+                    <span className="text-sm text-[var(--t3)] font-medium">{item.name}</span>
+                    <span className="text-sm text-[var(--t1)]">{item.value}</span>
+                  </div>
                 ))}
               </div>
             </motion.div>
           ))}
         </div>
-
-        {/* Tags */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.55 }}
-          className="mt-14 flex flex-wrap justify-center gap-2.5"
-        >
-          {["React", "Next.js", "TypeScript", "Three.js", "WebGL", "GLSL", "GSAP", "Node.js", "Python", "PostgreSQL", "Docker", "Figma", "Blender", "Tailwind"].map(
-            (t) => (
-              <span
-                key={t}
-                className="px-4 py-2 rounded-full border border-[rgba(255,255,255,0.05)] font-syne text-[10px] tracking-[0.1em] uppercase text-[var(--text-3)] hover:border-[rgba(201,168,76,0.25)] hover:text-[var(--text-2)] transition-all duration-300"
-              >
-                {t}
-              </span>
-            )
-          )}
-        </motion.div>
       </div>
     </section>
   );

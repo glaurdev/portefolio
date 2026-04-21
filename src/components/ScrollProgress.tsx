@@ -2,18 +2,16 @@
 import { useEffect, useRef } from "react";
 
 export default function ScrollProgress() {
-  const barRef = useRef<HTMLDivElement>(null);
-
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const bar = barRef.current;
-    if (!bar) return;
-    const onScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    const h = () => {
       const p = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
-      bar.style.width = `${p}%`;
+      el.style.width = `${p}%`;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
   }, []);
-
-  return <div ref={barRef} className="scroll-progress-bar" />;
+  return <div ref={ref} className="a-progress" />;
 }

@@ -1,12 +1,13 @@
 import dynamic from "next/dynamic";
-import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
-import Projects from "@/components/Projects";
-import About from "@/components/About";
-import Skills from "@/components/Skills";
-import Contact from "@/components/Contact";
+import Navigation   from "@/components/Navigation";
+import Hero         from "@/components/Hero";
+import About        from "@/components/About";
+import InfraSection from "@/components/InfraSection";
+import Projects     from "@/components/Projects";
+import Skills       from "@/components/Skills";
+import Contact      from "@/components/Contact";
 
-const CustomCursor = dynamic(() => import("@/components/CustomCursor"), { ssr: false });
+const CustomCursor   = dynamic(() => import("@/components/CustomCursor"),   { ssr: false });
 const ScrollProgress = dynamic(() => import("@/components/ScrollProgress"), { ssr: false });
 
 export default function Home() {
@@ -16,13 +17,22 @@ export default function Home() {
       <ScrollProgress />
       <Navigation />
       <main>
+        {/* 1 — Hero plein écran avec réseau 3D */}
         <Hero />
-        <Projects />
-        <div className="max-w-7xl mx-auto px-8"><div className="divider-gold" /></div>
+
+        {/* 2 — "Bonjour" + bio profil */}
         <About />
-        <div className="max-w-7xl mx-auto px-8"><div className="divider-gold" /></div>
+
+        {/* 3 — PMM & administration d'infrastructure */}
+        <InfraSection />
+
+        {/* 4 — Projets */}
+        <Projects />
+
+        {/* 5 — Tech specs */}
         <Skills />
-        <div className="max-w-7xl mx-auto px-8"><div className="divider-gold" /></div>
+
+        {/* 6 — Contact + footer */}
         <Contact />
       </main>
     </>

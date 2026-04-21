@@ -4,9 +4,19 @@ const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
+      colors: {
+        apple: {
+          black:   "#000000",
+          surface: "#1D1D1F",
+          white:   "#F5F5F7",
+          t2:      "#86868B",
+          t3:      "#6E6E73",
+          blue:    "#0071E3",
+          "blue-l":"#2997FF",
+        },
+      },
       fontFamily: {
-        syne: ["Syne", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        apple: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Arial", "sans-serif"],
       },
     },
   },
