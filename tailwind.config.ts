@@ -5,18 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        apple: {
-          black:   "#000000",
-          surface: "#1D1D1F",
-          white:   "#F5F5F7",
-          t2:      "#86868B",
-          t3:      "#6E6E73",
-          blue:    "#0071E3",
-          "blue-l":"#2997FF",
-        },
+        parchment: "#F4EEE0",
+        cream: "#EDE5CE",
+        ink: "#1C1814",
+        charcoal: "#2E2924",
+        gold: "#C09850",
+        "gold-light": "#D4B87A",
+        stone: "#7A6E5F",
+        muted: "#A89B88",
       },
       fontFamily: {
-        apple: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Arial", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        sans:  ["var(--font-sans)",  "system-ui", "sans-serif"],
       },
     },
   },

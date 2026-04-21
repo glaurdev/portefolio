@@ -1,8 +1,7 @@
 "use client";
-import { motion, useInView } from "framer-motion";
-import { useRef, MouseEvent } from "react";
-
-const ease = [0.25, 0.46, 0.45, 0.94] as const;
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const projects = [
   {
@@ -10,9 +9,9 @@ const projects = [
     eyebrow: "Infrastructure · Monitoring",
     title: "PMM Platform",
     tagline: "L'infrastructure, entièrement supervisée.",
-    desc: "Conception et déploiement d'une plateforme de Management et Monitoring complète. Collecte de métriques, centralisation des logs, alerting automatisé et dashboards temps réel pour l'ensemble des services.",
+    desc: "Conception et déploiement d'une plateforme de Management & Monitoring complète. Collecte de métriques, centralisation des logs, alerting automatisé et dashboards temps réel pour l'ensemble des services.",
     stack: ["Proxmox", "Grafana", "Prometheus", "Ansible", "Docker"],
-    accent: "#0071E3",
+    accent: "#C09850",
   },
   {
     num: "02",
@@ -21,16 +20,16 @@ const projects = [
     tagline: "Routé. Segmenté. Sécurisé.",
     desc: "Conception complète d'une architecture réseau multi-sites avec segmentation VLAN, routage dynamique OSPF, filtrage pare-feu stateful et haute disponibilité via redondance de liens.",
     stack: ["pfSense", "Cisco", "OSPF", "VLANs", "BGP"],
-    accent: "#2997FF",
+    accent: "#D4B87A",
   },
   {
     num: "03",
     eyebrow: "Administration · Services",
     title: "Services d'Infrastructure",
     tagline: "Chaque service, disponible.",
-    desc: "Administration complète des services réseau et système : DNS autoritaire, DHCP centralisé, Active Directory, VPN site-à-site, PKI interne, reverse proxy TLS et politique de sauvegarde 3-2-1.",
+    desc: "Administration complète des services réseau : DNS autoritaire, DHCP centralisé, Active Directory, VPN site-à-site, PKI interne, reverse proxy TLS et politique de sauvegarde 3-2-1.",
     stack: ["Linux", "Windows Server", "Nginx", "OpenVPN", "PKI"],
-    accent: "#30D158",
+    accent: "#C09850",
   },
   {
     num: "04",
@@ -39,99 +38,117 @@ const projects = [
     tagline: "Le réseau, piloté par le code.",
     desc: "Développement d'outils d'automatisation réseau en Python : scripts de configuration batch via Netmiko, collecte SNMP, génération de rapports d'inventaire et API REST de supervision.",
     stack: ["Python", "Netmiko", "SNMP", "Bash", "REST API"],
-    accent: "#FF9F0A",
+    accent: "#D4B87A",
   },
 ];
 
-function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const onMove = (e: MouseEvent) => {
-    const el = ref.current; if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(1000px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg) scale3d(1.015,1.015,1.015)`;
-  };
-  const onLeave = () => { if (ref.current) ref.current.style.transform = ""; };
-  return (
-    <div ref={ref} className={`transition-transform duration-200 ${className}`} style={{ transformStyle: "preserve-3d" }}
-      onMouseMove={onMove} onMouseLeave={onLeave}>
-      {children}
-    </div>
-  );
-}
-
 export default function Projects() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      gsap.from(".projects-label", {
+        opacity: 0, x: -18, duration: 0.9, ease: "power3.out",
+        scrollTrigger: { trigger: ".projects-label", start: "top 88%" },
+      });
+
+      gsap.from(".projects-headline", {
+        opacity: 0, y: 35, duration: 1.1, stagger: 0.1, ease: "power3.out",
+        scrollTrigger: { trigger: ".projects-headline", start: "top 82%" },
+      });
+
+      gsap.from(".project-card", {
+        opacity: 0, y: 48, duration: 1.0, stagger: 0.13, ease: "power3.out",
+        scrollTrigger: { trigger: ".project-card", start: "top 84%" },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <section id="projects" className="bg-[var(--surface)] py-28 px-8">
-      <div className="max-w-6xl mx-auto">
+    <section
+      ref={sectionRef}
+      id="projects"
+      className="relative overflow-hidden py-32 px-8"
+      style={{ backgroundColor: "var(--parchment)", color: "var(--ink)" }}
+    >
+      <div className="grain" style={{ opacity: 0.5 }} aria-hidden="true" />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease }}
-          ref={ref} className="text-center mb-20"
-        >
-          <p className="a-caption mb-5">Projets</p>
-          <h2 className="a-title-1 text-white">
-            Du concret.{" "}
-            <span className="a-text-blue">Du terrain.</span>
-          </h2>
-        </motion.div>
+        <p className="projects-label f-label mb-16" style={{ color: "var(--gold)" }}>Projets</p>
+
+        <div className="mb-20">
+          <div className="overflow-hidden mb-1">
+            <h2 className="projects-headline f-title" style={{ color: "var(--ink)" }}>Du concret.</h2>
+          </div>
+          <div className="overflow-hidden">
+            <h2 className="projects-headline f-title italic" style={{ color: "var(--gold)" }}>Du terrain.</h2>
+          </div>
+        </div>
 
         {/* Grid */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {projects.map((p, i) => (
-            <motion.div
+        <div className="grid md:grid-cols-2 gap-px" style={{ border: "1px solid rgba(192,152,80,0.15)" }}>
+          {projects.map((p) => (
+            <article
               key={p.num}
-              initial={{ opacity: 0, y: 40 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.1 + i * 0.1, ease }}
+              className="project-card p-10 flex flex-col gap-8 cursor-pointer group"
+              style={{ backgroundColor: "var(--parchment)", borderRight: "1px solid rgba(192,152,80,0.15)", borderBottom: "1px solid rgba(192,152,80,0.15)" }}
             >
-              <TiltCard>
-                <div
-                  className="bg-[var(--surface-2)] rounded-2xl p-8 h-full flex flex-col justify-between group hover:bg-[#2a2a2c] transition-colors duration-300 border border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.09)]"
-                  data-hover
-                >
-                  {/* Top */}
-                  <div>
-                    <div className="flex items-start justify-between mb-6">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.18em] font-semibold mb-2" style={{ color: p.accent }}>
-                          {p.eyebrow}
-                        </p>
-                        <span className="text-[var(--t4)] text-xs font-mono">{p.num}</span>
-                      </div>
-                      <a
-                        href="#"
-                        data-hover
-                        className="w-9 h-9 rounded-full border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[var(--t3)] hover:border-[var(--blue-l)] hover:text-[var(--blue-l)] transition-all duration-200 group-hover:scale-110"
-                      >
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                          <path d="M1 10L10 1M10 1H3M10 1V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </a>
-                    </div>
-
-                    <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">{p.title}</h3>
-                    <p className="text-sm font-medium mb-4" style={{ color: p.accent }}>{p.tagline}</p>
-                    <p className="text-sm text-[var(--t2)] leading-[1.65]">{p.desc}</p>
-                  </div>
-
-                  {/* Stack */}
-                  <div className="flex flex-wrap gap-2 mt-8">
-                    {p.stack.map((t) => (
-                      <span key={t} className="text-[10px] px-3 py-1.5 rounded-full border border-[rgba(255,255,255,0.07)] text-[var(--t3)] font-medium tracking-wide">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+              {/* Top row */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="f-label mb-2" style={{ color: p.accent }}>{p.eyebrow}</p>
+                  <span className="f-label" style={{ color: "var(--muted)", opacity: 0.6 }}>{p.num}</span>
                 </div>
-              </TiltCard>
-            </motion.div>
+
+                {/* Arrow link */}
+                <span
+                  className="w-10 h-10 flex items-center justify-center border transition-all duration-300 group-hover:border-gold group-hover:text-gold"
+                  style={{ border: "1px solid rgba(192,152,80,0.25)", color: "var(--muted)", borderRadius: 0 }}
+                  aria-hidden="true"
+                >
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                    <path d="M1 10L10 1M10 1H3M10 1V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                {/* Large ghost number behind title */}
+                <div className="relative">
+                  <span
+                    className="absolute -top-4 -left-2 font-serif font-light leading-none select-none pointer-events-none transition-opacity duration-300 group-hover:opacity-10"
+                    style={{ fontSize: "clamp(64px,8vw,100px)", color: "var(--gold)", opacity: 0.06 }}
+                    aria-hidden="true"
+                  >
+                    {p.num}
+                  </span>
+                  <h3 className="f-title-sm relative z-10 mb-2" style={{ color: "var(--ink)" }}>{p.title}</h3>
+                </div>
+
+                <p className="f-label mb-5 mt-1" style={{ color: p.accent }}>{p.tagline}</p>
+                <p className="f-body-sm leading-relaxed" style={{ color: "var(--stone)" }}>{p.desc}</p>
+              </div>
+
+              {/* Stack tags */}
+              <div className="flex flex-wrap gap-2">
+                {p.stack.map((t) => (
+                  <span
+                    key={t}
+                    className="f-label px-3 py-1.5 transition-colors duration-300"
+                    style={{ border: "1px solid rgba(192,152,80,0.2)", color: "var(--stone)" }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </article>
           ))}
         </div>
       </div>

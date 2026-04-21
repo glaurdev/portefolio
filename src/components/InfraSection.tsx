@@ -1,135 +1,167 @@
 "use client";
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-
-const ease = [0.25, 0.46, 0.45, 0.94] as const;
-
-function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 28 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.9, delay, ease }} className={className}>
-      {children}
-    </motion.div>
-  );
-}
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const services = [
-  { icon: "◈", label: "Supervision réseau",   desc: "Monitoring temps réel de tous les équipements réseau — switchs, routeurs, pare-feux." },
-  { icon: "◉", label: "Métriques serveurs",   desc: "CPU, RAM, disques, I/O — chaque métrique collectée, historisée et alertée." },
-  { icon: "◆", label: "Logs centralisés",     desc: "Agrégation de tous les journaux systèmes et applicatifs en un point unique." },
-  { icon: "⬡", label: "Alerting intelligent", desc: "Seuils dynamiques, escalades automatiques, notifications multi-canaux." },
-  { icon: "◎", label: "Dashboards",           desc: "Tableaux de bord personnalisés pour chaque couche de l'infrastructure." },
-  { icon: "⬢", label: "Inventaire auto",      desc: "Découverte et inventaire automatique des assets réseau et systèmes." },
+  { icon: "◈", title: "Supervision",     desc: "Prometheus + Grafana · dashboards temps réel" },
+  { icon: "◉", title: "Métriques",       desc: "Node Exporter · collecte SNMP · Telegraf" },
+  { icon: "◎", title: "Centralisation",  desc: "ELK Stack · Loki · syslog centralisé" },
+  { icon: "◇", title: "Alerting",        desc: "Alertmanager · PagerDuty · Slack webhooks" },
+  { icon: "◈", title: "Virtualisation",  desc: "Proxmox VE · Docker · LXC · KVM" },
+  { icon: "◉", title: "Réseaux",         desc: "pfSense · OSPF · VLANs · BGP · VPN" },
 ];
 
+function Counter({ target, trigger }: { target: number; trigger: boolean }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!trigger) return;
+    const duration = 1800;
+    const start = performance.now();
+    function frame(now: number) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 4);
+      setCount(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }, [trigger, target]);
+  return <>{count}</>;
+}
+
 export default function InfraSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const sectionRef = useRef<HTMLElement>(null);
+  const [counterOn, setCounterOn] = useState(false);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      gsap.from(".infra-label", {
+        opacity: 0, x: -18, duration: 0.9, ease: "power3.out",
+        scrollTrigger: { trigger: ".infra-label", start: "top 88%" },
+      });
+
+      gsap.from(".infra-headline", {
+        opacity: 0, y: 35, duration: 1.1, stagger: 0.1, ease: "power3.out",
+        scrollTrigger: { trigger: ".infra-headline", start: "top 82%" },
+      });
+
+      ScrollTrigger.create({
+        trigger: ".infra-stats",
+        start: "top 82%",
+        onEnter: () => setCounterOn(true),
+      });
+
+      gsap.from(".infra-stat", {
+        opacity: 0, y: 28, duration: 0.9, stagger: 0.12, ease: "power3.out",
+        scrollTrigger: { trigger: ".infra-stats", start: "top 82%" },
+      });
+
+      gsap.from(".service-card", {
+        opacity: 0, y: 32, duration: 0.85, stagger: 0.08, ease: "power3.out",
+        scrollTrigger: { trigger: ".service-card", start: "top 84%" },
+      });
+
+      /* Horizontal rule draws */
+      const lines = gsap.utils.toArray<SVGGeometryElement>(".infra-line");
+      lines.forEach((l) => {
+        const len = l.getTotalLength?.() ?? 300;
+        gsap.set(l, { strokeDasharray: len, strokeDashoffset: len });
+        gsap.to(l, {
+          strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut",
+          scrollTrigger: { trigger: sectionRef.current, start: "top 75%" },
+        });
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <>
-      {/* ── PMM Callout — Apple "one more thing" style ── */}
-      <section id="infra" className="bg-black py-40 px-6 flex flex-col items-center justify-center text-center">
-        <Reveal>
-          <p className="a-caption mb-5">Infrastructure · PMM</p>
-          <h2 className="a-display text-white">
-            PMM Platform.
-          </h2>
-        </Reveal>
-        <Reveal delay={0.12} className="mt-6 max-w-2xl">
-          <p className="a-title-3">
-            Déployée. Configurée. Administrée.
-          </p>
-        </Reveal>
-        <Reveal delay={0.22} className="mt-5 max-w-xl">
-          <p className="a-body text-center">
-            Grégoire a conçu et mis en place une plateforme de Management
-            et Monitoring complète pour superviser l'intégralité des services
-            d'infrastructure — du réseau aux applications, en temps réel.
-          </p>
-        </Reveal>
+    <section
+      ref={sectionRef}
+      id="infra"
+      className="relative overflow-hidden py-32 px-8 bg-ink"
+    >
+      <div className="grain" aria-hidden="true" />
 
-        {/* Big stat row */}
-        <Reveal delay={0.32} className="mt-16 w-full max-w-3xl">
-          <div className="grid grid-cols-3 gap-px bg-[rgba(255,255,255,0.08)] rounded-2xl overflow-hidden border border-[rgba(255,255,255,0.08)]">
-            {[
-              { value: "100%",  label: "Services supervisés" },
-              { value: "24/7",  label: "Monitoring continu" },
-              { value: "<1 s",  label: "Temps de réponse alerte" },
-            ].map((s) => (
-              <div key={s.label} className="bg-[#111] py-10 px-6 flex flex-col items-center gap-2">
-                <span className="a-title-1 a-text-blue">{s.value}</span>
-                <span className="text-xs uppercase tracking-widest text-[var(--t3)]">{s.label}</span>
-              </div>
-            ))}
+      {/* Decorative SVG lines */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.06]" aria-hidden="true">
+        <line className="infra-line" x1="0" y1="50%" x2="100%" y2="50%" stroke="#C09850" strokeWidth="1" />
+        <line className="infra-line" x1="50%" y1="0" x2="50%" y2="100%" stroke="#C09850" strokeWidth="1" />
+      </svg>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
+
+        {/* Label */}
+        <p className="infra-label f-label mb-16" style={{ color: "var(--gold)" }}>
+          Plateforme PMM
+        </p>
+
+        {/* Headline */}
+        <div className="mb-20 max-w-3xl">
+          <div className="overflow-hidden mb-2">
+            <h2 className="infra-headline f-title text-parchment">L'infrastructure,</h2>
           </div>
-        </Reveal>
-      </section>
-
-      {/* ── Services grid ── */}
-      <section className="bg-[var(--surface)] py-28 px-8">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="text-center mb-16">
-            <p className="a-caption mb-4">Ce qui est géré</p>
-            <h3 className="a-title-1 text-white">
-              Chaque service,{" "}
-              <span className="a-text-blue">sous contrôle.</span>
-            </h3>
-          </Reveal>
-
-          <div ref={ref} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {services.map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 32 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.75, delay: i * 0.08, ease }}
-                className="bg-[var(--surface-2)] rounded-2xl p-7 group hover:bg-[#2a2a2c] transition-colors duration-300"
-                data-hover
-              >
-                <span className="text-2xl text-[var(--blue-l)] block mb-4" style={{ filter: "drop-shadow(0 0 8px #2997FF60)" }}>
-                  {s.icon}
-                </span>
-                <h4 className="text-base font-semibold text-white mb-2">{s.label}</h4>
-                <p className="text-sm text-[var(--t2)] leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
+          <div className="overflow-hidden">
+            <h2 className="infra-headline f-title italic" style={{ color: "var(--gold)" }}>entièrement supervisée.</h2>
           </div>
+          <p className="infra-headline f-subtitle mt-8 max-w-xl" style={{ color: "var(--stone)" }}>
+            Conception et déploiement d'une plateforme de Management & Monitoring complète pour l'ensemble des services de l'établissement.
+          </p>
         </div>
-      </section>
 
-      {/* ── Admin role banner ── */}
-      <section className="bg-black py-32 px-6 text-center">
-        <Reveal>
-          <p className="a-caption mb-5">Rôle</p>
-          <h2 className="a-title-1 text-white max-w-4xl mx-auto leading-tight">
-            Administrateur de tous{" "}
-            <span className="a-text-blue">les services d'infrastructure.</span>
-          </h2>
-        </Reveal>
-        <Reveal delay={0.15} className="mt-8 max-w-2xl mx-auto">
-          <p className="a-body text-center">
-            DNS, DHCP, Active Directory, VPN, pare-feux, virtualisation, reverse proxy,
-            certificats TLS, sauvegardes — Grégoire administre chaque brique de l'infrastructure
-            de bout en bout, seul et de manière autonome.
-          </p>
-        </Reveal>
+        {/* Stats row */}
+        <div className="infra-stats grid grid-cols-3 gap-px mb-20 max-w-2xl" style={{ border: "1px solid rgba(192,152,80,0.18)" }}>
+          {[
+            { num: 100, suffix: "%", label: "Services supervisés" },
+            { num: 24,  suffix: "/7", label: "Disponibilité" },
+            { num: 1,   suffix: "s",  label: "Latence alerting" },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              className="infra-stat p-8 text-center"
+              style={{ borderRight: i < 2 ? "1px solid rgba(192,152,80,0.18)" : "none" }}
+            >
+              <p className="font-serif font-light mb-1" style={{ fontSize: "clamp(36px,5vw,64px)", color: "var(--gold)", lineHeight: 1 }}>
+                <Counter target={s.num} trigger={counterOn} />{s.suffix}
+              </p>
+              <p className="f-label" style={{ color: "var(--muted)" }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
 
-        {/* Horizontal service tags */}
-        <Reveal delay={0.25} className="mt-12 flex flex-wrap items-center justify-center gap-3">
-          {["DNS", "DHCP", "Active Directory", "VPN", "pfSense", "Proxmox", "Nginx", "TLS/PKI",
-            "Grafana", "Prometheus", "Docker", "Sauvegardes", "VLAN", "OSPF"].map((tag) => (
+        {/* Services grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ border: "1px solid rgba(192,152,80,0.12)" }}>
+          {services.map((s) => (
+            <div
+              key={s.title}
+              className="service-card p-8 group transition-colors duration-300 hover:bg-parchment/[0.04]"
+              style={{ borderRight: "1px solid rgba(192,152,80,0.12)", borderBottom: "1px solid rgba(192,152,80,0.12)" }}
+            >
+              <span className="block f-label mb-4 group-hover:text-gold transition-colors duration-300" style={{ color: "var(--gold)", opacity: 0.5 }}>
+                {s.icon}
+              </span>
+              <h3 className="font-serif text-xl font-light mb-2 text-parchment">{s.title}</h3>
+              <p className="f-body-sm" style={{ color: "var(--stone)" }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Admin tags */}
+        <div className="mt-16 flex flex-wrap gap-3">
+          {["DNS","DHCP","Active Directory","pfSense","Proxmox VE","OpenVPN","WireGuard","Nginx","PKI","Ansible","Docker","Zabbix"].map((tag) => (
             <span
               key={tag}
-              className="px-4 py-2 rounded-full border border-[rgba(255,255,255,0.1)] text-[var(--t2)] text-xs font-medium tracking-wide hover:border-[var(--blue)] hover:text-white transition-all duration-200"
+              className="f-label px-4 py-2 transition-all duration-300 hover:border-gold/50"
+              style={{ border: "1px solid rgba(192,152,80,0.22)", color: "var(--stone)" }}
             >
               {tag}
             </span>
           ))}
-        </Reveal>
-      </section>
-    </>
+        </div>
+      </div>
+    </section>
   );
 }

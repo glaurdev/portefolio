@@ -1,84 +1,162 @@
 "use client";
-import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
-
-const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false });
-
-const ease = [0.25, 0.46, 0.45, 0.94] as const;
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export default function Hero() {
+  const heroRef = useRef<HTMLElement>(null);
+  const ruleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      /* Eyebrow fades in */
+      gsap.from(".hero-eyebrow", { opacity: 0, y: 14, duration: 0.9, delay: 0.1, ease: "power3.out" });
+
+      /* Title words slide up from clip */
+      gsap.from(".hero-word", {
+        y: "108%",
+        duration: 1.15,
+        stagger: 0.13,
+        ease: "power4.out",
+        delay: 0.2,
+      });
+
+      /* Gold rule scales from left */
+      gsap.from(ruleRef.current, {
+        scaleX: 0,
+        transformOrigin: "left center",
+        duration: 1.4,
+        delay: 0.95,
+        ease: "expo.inOut",
+      });
+
+      /* Subtitle & CTAs fade up staggered */
+      gsap.from(".hero-fade", {
+        opacity: 0,
+        y: 22,
+        duration: 1.0,
+        stagger: 0.12,
+        delay: 1.3,
+        ease: "power3.out",
+      });
+
+      /* Scroll indicator */
+      gsap.from(".hero-scroll", { opacity: 0, duration: 1, delay: 2.1, ease: "power2.out" });
+
+      /* SVG architectural arcs draw themselves */
+      const paths = gsap.utils.toArray<SVGGeometryElement>(".arc-path");
+      paths.forEach((p, i) => {
+        const len = p.getTotalLength?.() ?? 600;
+        gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
+        gsap.to(p, {
+          strokeDashoffset: 0,
+          duration: 1.8,
+          delay: 0.8 + i * 0.16,
+          ease: "power2.inOut",
+        });
+      });
+
+      /* Parallax ghost text on scroll */
+      gsap.to(".hero-ghost", {
+        yPercent: -20,
+        ease: "none",
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative h-screen bg-[#000] flex flex-col items-center justify-center overflow-hidden">
-      {/* Network 3D */}
-      <div className="absolute inset-0 opacity-65 pointer-events-none">
-        <Scene3D />
+    <section
+      ref={heroRef}
+      id="home"
+      className="relative min-h-screen bg-ink flex flex-col justify-center overflow-hidden"
+    >
+      {/* Grain overlay */}
+      <div className="grain" aria-hidden="true" />
+
+      {/* Architectural SVG arcs — right side */}
+      <svg
+        className="absolute right-0 top-0 h-full w-[44%] opacity-[0.17] text-gold pointer-events-none"
+        viewBox="0 0 420 800"
+        fill="none"
+        preserveAspectRatio="xMaxYMid slice"
+        aria-hidden="true"
+      >
+        <path className="arc-path" d="M 420 0 A 420 420 0 0 1 0 420" stroke="currentColor" strokeWidth="0.9" />
+        <path className="arc-path" d="M 420 80 A 340 340 0 0 1 80 420" stroke="currentColor" strokeWidth="0.7" />
+        <path className="arc-path" d="M 420 158 A 262 262 0 0 1 158 420" stroke="currentColor" strokeWidth="0.6" />
+        <path className="arc-path" d="M 420 236 A 184 184 0 0 1 236 420" stroke="currentColor" strokeWidth="0.5" />
+        <path className="arc-path" d="M 0 280 L 420 280" stroke="currentColor" strokeWidth="0.35" opacity="0.6" />
+        <path className="arc-path" d="M 280 0 L 280 800" stroke="currentColor" strokeWidth="0.35" opacity="0.6" />
+        <path className="arc-path" d="M 272 272 L 288 272 M 280 264 L 280 288" stroke="currentColor" strokeWidth="0.9" />
+        <circle className="arc-path" cx="280" cy="280" r="12" stroke="currentColor" strokeWidth="0.7" />
+        <circle className="arc-path" cx="280" cy="280" r="3"  stroke="currentColor" strokeWidth="1.4" />
+        <path className="arc-path" d="M 340 600 L 420 600" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+        <path className="arc-path" d="M 380 560 L 380 640" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+      </svg>
+
+      {/* Ghost parallax text */}
+      <div className="hero-ghost absolute bottom-0 left-0 right-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+        <p className="font-serif text-[22vw] font-light leading-none tracking-tighter pl-4 text-parchment/[0.025]">
+          réseau
+        </p>
       </div>
 
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+      {/* Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-8 lg:px-24 pt-28 pb-24">
 
-      {/* Hero content */}
-      <div className="relative z-10 text-center px-6 max-w-5xl w-full">
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease }}
-          className="a-caption text-[var(--blue-l)] mb-5"
-        >
+        <p className="hero-eyebrow f-label text-gold/65 mb-10">
           Étudiant Informatique · Spécialité Réseaux · 3ème année
-        </motion.p>
+        </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.1, ease }}
-          className="a-display text-white mb-6"
-        >
-          Grégoire Laurent.
-        </motion.h1>
+        <div className="mb-10">
+          <div className="overflow-hidden leading-none mb-1">
+            <h1 className="hero-word f-display text-parchment inline-block">Grégoire</h1>
+          </div>
+          <div className="overflow-hidden leading-none">
+            <h1 className="hero-word f-display text-parchment italic inline-block">Laurent.</h1>
+          </div>
+        </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, delay: 0.22, ease }}
-          className="a-title-3 text-[var(--t2)] max-w-2xl mx-auto mb-10"
-        >
-          Administrateur d'infrastructure. Architecte réseau.<br />
-          Concepteur de la plateforme PMM.
-        </motion.p>
+        <div
+          ref={ruleRef}
+          className="w-40 h-px mb-11 origin-left"
+          style={{ background: "linear-gradient(90deg,#C09850,rgba(192,152,80,0.15))" }}
+        />
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.35, ease }}
-          className="flex items-center justify-center gap-6 flex-wrap"
-        >
-          <a href="#infra" data-hover className="a-btn">
-            Découvrir l'infrastructure
-          </a>
-          <a href="#contact" data-hover className="a-btn-ghost">
-            Me contacter
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <path d="M1 10L10 1M10 1H3M10 1V8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        <p className="hero-fade f-subtitle text-stone mb-12 max-w-[420px]">
+          Administrateur d'infrastructure.<br />Architecte réseau. Concepteur<br />de la plateforme PMM.
+        </p>
+
+        <div className="flex items-center gap-9 flex-wrap">
+          <a href="#projects" className="hero-fade link-gold">
+            Voir les projets
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </a>
-        </motion.div>
+          <a href="#contact" className="hero-fade btn-ghost">
+            Me contacter
+          </a>
+        </div>
       </div>
 
-      {/* Scroll chevron */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.2, duration: 1 }}
-        className="absolute bottom-9 left-1/2 -translate-x-1/2 z-10"
-      >
-        <svg
-          width="20" height="12" viewBox="0 0 20 12" fill="none"
-          className="text-[var(--t4)] animate-bounce"
-        >
-          <path d="M1 1l9 9 9-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </motion.div>
+      {/* Scroll indicator */}
+      <div className="hero-scroll absolute bottom-10 left-8 lg:left-24 flex items-center gap-3" aria-hidden="true">
+        <div className="relative w-px h-14 overflow-hidden" style={{ background: "rgba(122,110,95,0.2)" }}>
+          <div className="absolute inset-x-0 top-0 h-5 scroll-drop" style={{ background: "#C09850" }} />
+        </div>
+        <span className="f-label text-stone/35">défiler</span>
+      </div>
     </section>
   );
 }
