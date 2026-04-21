@@ -7,12 +7,14 @@ import Projects     from "@/components/Projects";
 import Skills       from "@/components/Skills";
 import Contact      from "@/components/Contact";
 
-const CustomCursor   = dynamic(() => import("@/components/CustomCursor"),   { ssr: false });
-const ScrollProgress = dynamic(() => import("@/components/ScrollProgress"), { ssr: false });
+const CustomCursor     = dynamic(() => import("@/components/CustomCursor"),     { ssr: false });
+const ScrollProgress   = dynamic(() => import("@/components/ScrollProgress"),   { ssr: false });
+const FloatingDevices  = dynamic(() => import("@/components/FloatingDevices"),  { ssr: false });
 
 export default function Home() {
   return (
     <>
+      <FloatingDevices />
       <CustomCursor />
       <ScrollProgress />
       <Navigation />
