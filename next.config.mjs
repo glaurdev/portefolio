@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["three"],
+  transpilePackages: ["gsap"],
 };
 
 export default nextConfig;
